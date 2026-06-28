@@ -19,7 +19,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "fastify": "5.8.5"
+    "fastify": "5.8.5",
+    "fastify-type-provider-zod": "6.1.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
