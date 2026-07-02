@@ -1,18 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config.js";
 
+const base = { DATABASE_URL: "postgres://chat:chat@localhost:5432/chat" };
+
 describe("loadConfig", () => {
   it("applies defaults", () => {
-    const config = loadConfig({});
+    const config = loadConfig(base);
     expect(config.PORT).toBe(3000);
     expect(config.LOG_LEVEL).toBe("info");
   });
 
   it("coerces the port from a string", () => {
-    expect(loadConfig({ PORT: "4100" }).PORT).toBe(4100);
+    expect(loadConfig({ ...base, PORT: "4100" }).PORT).toBe(4100);
+  });
+
+  it("requires a database url", () => {
+    expect(() => loadConfig({})).toThrow(/DATABASE_URL/);
   });
 
   it("throws on an invalid value", () => {
-    expect(() => loadConfig({ PORT: "abc" })).toThrow(/Invalid environment/);
+    expect(() => loadConfig({ ...base, PORT: "abc" })).toThrow(/Invalid environment/);
   });
 });
