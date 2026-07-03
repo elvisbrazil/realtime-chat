@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config.js";
 
-const base = { DATABASE_URL: "postgres://chat:chat@localhost:5432/chat" };
+const base = {
+  DATABASE_URL: "postgres://chat:chat@localhost:5432/chat",
+  JWT_SECRET: "a-test-secret-that-is-long-enough",
+};
 
 describe("loadConfig", () => {
   it("applies defaults", () => {
