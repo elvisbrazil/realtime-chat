@@ -7,6 +7,8 @@ import {
 import type { Config } from "./config.js";
 import type { Database } from "./db/client.js";
 import { authRoutes } from "./modules/auth/routes.js";
+import { createRoomRepository } from "./modules/rooms/repository.js";
+import { roomRoutes } from "./modules/rooms/routes.js";
 import { authPlugin } from "./plugins/auth.js";
 
 export type AppConfig = Pick<Config, "LOG_LEVEL" | "JWT_SECRET" | "JWT_EXPIRES_IN">;
@@ -16,7 +18,7 @@ export interface AppDeps {
   db: Database;
 }
 
-export function buildApp({ config }: AppDeps) {
+export function buildApp({ config, db }: AppDeps) {
   const app = Fastify({ logger: { level: config.LOG_LEVEL } }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
@@ -26,6 +28,7 @@ export function buildApp({ config }: AppDeps) {
 
   app.get("/health", async () => ({ status: "ok" }));
   app.register(authRoutes);
+  app.register(roomRoutes, { rooms: createRoomRepository(db) });
 
   return app;
 }
