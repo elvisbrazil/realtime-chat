@@ -31,6 +31,15 @@ describe("chat websocket", () => {
     await expect(app.injectWS("/ws")).rejects.toThrow(/401/);
   });
 
+  it("accepts the token as a Sec-WebSocket-Protocol entry", async () => {
+    const ws = await app.injectWS("/ws", {
+      headers: { "sec-websocket-protocol": `chat, ${anaToken}` },
+    });
+
+    expect(ws.readyState).toBe(ws.OPEN);
+    ws.terminate();
+  });
+
   it("sends a presence snapshot after joining", async () => {
     const room = await createRoom(app, anaToken, "snapshot");
     const ana = await open(anaToken);

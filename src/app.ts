@@ -6,6 +6,7 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import type { Broker } from "./broker/broker.js";
+import { selectProtocol } from "./chat/handshake.js";
 import { chatRoutes } from "./chat/routes.js";
 import type { Config } from "./config.js";
 import type { Database } from "./db/client.js";
@@ -30,7 +31,7 @@ export function buildApp({ config, db, broker }: AppDeps) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  app.register(websocket);
+  app.register(websocket, { options: { handleProtocols: selectProtocol } });
   app.register(authPlugin, { secret: config.JWT_SECRET, expiresIn: config.JWT_EXPIRES_IN });
 
   app.get("/health", async () => ({ status: "ok" }));
