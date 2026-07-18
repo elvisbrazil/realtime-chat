@@ -1,15 +1,18 @@
 import { buildApp } from "./app.js";
+import { MemoryBroker } from "./broker/memory-broker.js";
 import { loadConfig } from "./config.js";
 import { createDatabase } from "./db/client.js";
 
 const config = loadConfig();
 const database = createDatabase(config.DATABASE_URL);
-const app = buildApp({ config, db: database.db });
+const broker = new MemoryBroker();
+const app = buildApp({ config, db: database.db, broker });
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, "shutting down");
   try {
     await app.close();
+    await broker.close();
     await database.close();
     process.exit(0);
   } catch (err) {

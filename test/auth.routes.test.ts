@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { App } from "../src/app.js";
 import { createTestApp } from "./helpers/app.js";
 
 describe("POST /auth/token", () => {
-  let app: Awaited<ReturnType<typeof createTestApp>>;
+  let app: App;
 
   beforeAll(async () => {
     app = await createTestApp();

@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createMessageRepository } from "../src/modules/messages/repository.js";
 import { createRoomRepository } from "../src/modules/rooms/repository.js";
-import { buildApp } from "../src/app.js";
+import type { App } from "../src/app.js";
 import { createTestDatabase } from "./helpers/db.js";
-import { testConfig } from "./helpers/app.js";
+import { createTestApp } from "./helpers/app.js";
 
 interface Page {
   messages: { body: string }[];
@@ -11,7 +11,7 @@ interface Page {
 }
 
 describe("GET /rooms/:roomId/messages", () => {
-  let app: ReturnType<typeof buildApp>;
+  let app: App;
   let close: () => Promise<void>;
   let roomId: string;
   let auth: { authorization: string };
@@ -19,8 +19,7 @@ describe("GET /rooms/:roomId/messages", () => {
   beforeAll(async () => {
     const database = await createTestDatabase();
     close = database.close;
-    app = buildApp({ config: testConfig, db: database.db });
-    await app.ready();
+    app = await createTestApp({ db: database.db });
     auth = { authorization: `Bearer ${app.jwt.sign({ sub: "ana" })}` };
 
     const room = await createRoomRepository(database.db).create("history", "ana");
