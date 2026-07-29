@@ -8,6 +8,9 @@ export const testConfig: AppConfig = {
   LOG_LEVEL: "silent",
   JWT_SECRET: "test-secret-0123456789abcdef",
   JWT_EXPIRES_IN: "1h",
+  MAX_MESSAGE_BYTES: 4096,
+  RATE_LIMIT_BURST: 20,
+  RATE_LIMIT_PER_SECOND: 10,
 };
 
 interface TestAppOptions {

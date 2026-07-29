@@ -8,6 +8,9 @@ const envSchema = z.object({
   DATABASE_URL: z.url(),
   JWT_SECRET: z.string().min(16),
   JWT_EXPIRES_IN: z.string().default("12h"),
+  MAX_MESSAGE_BYTES: z.coerce.number().int().positive().default(4096),
+  RATE_LIMIT_BURST: z.coerce.number().int().positive().default(10),
+  RATE_LIMIT_PER_SECOND: z.coerce.number().positive().default(2),
 });
 
 export type Config = z.infer<typeof envSchema>;

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyBaseLogger } from "fastify";
 import type { WebSocket } from "ws";
+import type { TokenBucket } from "../lib/token-bucket.js";
 import type { MessageRepository } from "../modules/messages/repository.js";
 import type { RoomRepository } from "../modules/rooms/repository.js";
 import type { ChatHub, Member } from "./hub.js";
@@ -11,6 +12,7 @@ export interface SessionDeps {
   rooms: RoomRepository;
   messages: MessageRepository;
   log: FastifyBaseLogger;
+  limiter: TokenBucket;
 }
 
 export class ChatSession implements Member {
@@ -101,6 +103,10 @@ export class ChatSession implements Member {
     const { room, text, clientMsgId } = message;
     if (!this.rooms.has(room)) {
       this.send({ type: "error", code: "not_joined", message: "join the room first", clientMsgId });
+      return;
+    }
+    if (!this.deps.limiter.take()) {
+      this.send({ type: "error", code: "rate_limited", message: "slow down", clientMsgId });
       return;
     }
 

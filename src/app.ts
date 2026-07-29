@@ -17,7 +17,15 @@ import { createRoomRepository } from "./modules/rooms/repository.js";
 import { roomRoutes } from "./modules/rooms/routes.js";
 import { authPlugin } from "./plugins/auth.js";
 
-export type AppConfig = Pick<Config, "LOG_LEVEL" | "JWT_SECRET" | "JWT_EXPIRES_IN">;
+export type AppConfig = Pick<
+  Config,
+  | "LOG_LEVEL"
+  | "JWT_SECRET"
+  | "JWT_EXPIRES_IN"
+  | "MAX_MESSAGE_BYTES"
+  | "RATE_LIMIT_BURST"
+  | "RATE_LIMIT_PER_SECOND"
+>;
 
 export interface AppDeps {
   config: AppConfig;
@@ -31,7 +39,9 @@ export function buildApp({ config, db, broker }: AppDeps) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  app.register(websocket, { options: { handleProtocols: selectProtocol } });
+  app.register(websocket, {
+    options: { handleProtocols: selectProtocol, maxPayload: config.MAX_MESSAGE_BYTES * 4 },
+  });
   app.register(authPlugin, { secret: config.JWT_SECRET, expiresIn: config.JWT_EXPIRES_IN });
 
   app.get("/health", async () => ({ status: "ok" }));
@@ -41,7 +51,13 @@ export function buildApp({ config, db, broker }: AppDeps) {
 
   app.register(roomRoutes, { rooms });
   app.register(messageRoutes, { rooms, messages });
-  app.register(chatRoutes, { broker, rooms, messages });
+  app.register(chatRoutes, {
+    broker,
+    rooms,
+    messages,
+    maxMessageBytes: config.MAX_MESSAGE_BYTES,
+    rateLimit: { burst: config.RATE_LIMIT_BURST, perSecond: config.RATE_LIMIT_PER_SECOND },
+  });
 
   return app;
 }
