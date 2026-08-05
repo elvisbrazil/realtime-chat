@@ -14,10 +14,17 @@ interface Options {
   messages: MessageRepository;
   maxMessageBytes: number;
   rateLimit: { burst: number; perSecond: number };
+  heartbeatMs: number;
 }
 
 export const chatRoutes: FastifyPluginAsyncZod<Options> = async (app, opts) => {
-  const hub = new ChatHub(opts.broker, app.log);
+  const hub = new ChatHub(opts.broker, app.log, opts.heartbeatMs * 3);
+
+  const timer = setInterval(() => {
+    hub.heartbeat().catch((err: unknown) => app.log.warn({ err }, "heartbeat failed"));
+  }, opts.heartbeatMs);
+  timer.unref();
+  app.addHook("onClose", async () => clearInterval(timer));
 
   app.get(
     "/ws",

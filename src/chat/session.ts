@@ -43,13 +43,7 @@ export class ChatSession implements Member {
 
   async close(): Promise<void> {
     await this.queue;
-    const rooms = [...this.rooms];
     await this.deps.hub.leaveAll(this);
-    await Promise.all(
-      rooms.map((room) =>
-        this.deps.hub.publish(room, { type: "presence", room, user: this.user, status: "offline" }),
-      ),
-    );
   }
 
   private async handle(raw: string): Promise<void> {

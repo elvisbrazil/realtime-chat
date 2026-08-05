@@ -11,6 +11,7 @@ const envSchema = z.object({
   MAX_MESSAGE_BYTES: z.coerce.number().int().positive().default(4096),
   RATE_LIMIT_BURST: z.coerce.number().int().positive().default(10),
   RATE_LIMIT_PER_SECOND: z.coerce.number().positive().default(2),
+  HEARTBEAT_INTERVAL_MS: z.coerce.number().int().min(1000).default(15_000),
 });
 
 export type Config = z.infer<typeof envSchema>;

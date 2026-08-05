@@ -25,6 +25,7 @@ export type AppConfig = Pick<
   | "MAX_MESSAGE_BYTES"
   | "RATE_LIMIT_BURST"
   | "RATE_LIMIT_PER_SECOND"
+  | "HEARTBEAT_INTERVAL_MS"
 >;
 
 export interface AppDeps {
@@ -57,6 +58,7 @@ export function buildApp({ config, db, broker }: AppDeps) {
     messages,
     maxMessageBytes: config.MAX_MESSAGE_BYTES,
     rateLimit: { burst: config.RATE_LIMIT_BURST, perSecond: config.RATE_LIMIT_PER_SECOND },
+    heartbeatMs: config.HEARTBEAT_INTERVAL_MS,
   });
 
   return app;

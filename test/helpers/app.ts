@@ -11,6 +11,7 @@ export const testConfig: AppConfig = {
   MAX_MESSAGE_BYTES: 4096,
   RATE_LIMIT_BURST: 20,
   RATE_LIMIT_PER_SECOND: 10,
+  HEARTBEAT_INTERVAL_MS: 15_000,
 };
 
 interface TestAppOptions {
