@@ -6,6 +6,7 @@ import type { RoomRepository } from "../modules/rooms/repository.js";
 import { handshakeToken } from "./handshake.js";
 import { TokenBucket } from "../lib/token-bucket.js";
 import { ChatHub } from "./hub.js";
+import { Liveness } from "./liveness.js";
 import { ChatSession } from "./session.js";
 
 interface Options {
@@ -20,7 +21,11 @@ interface Options {
 export const chatRoutes: FastifyPluginAsyncZod<Options> = async (app, opts) => {
   const hub = new ChatHub(opts.broker, app.log, opts.heartbeatMs * 3);
 
+  const liveness = new Liveness();
+
   const timer = setInterval(() => {
+    const terminated = liveness.check();
+    if (terminated > 0) app.log.info({ terminated }, "terminated unresponsive sockets");
     hub.heartbeat().catch((err: unknown) => app.log.warn({ err }, "heartbeat failed"));
   }, opts.heartbeatMs);
   timer.unref();
@@ -41,6 +46,7 @@ export const chatRoutes: FastifyPluginAsyncZod<Options> = async (app, opts) => {
       },
     },
     (socket, request) => {
+      liveness.track(socket);
       const session = new ChatSession(socket, request.user.sub, {
         hub,
         rooms: opts.rooms,
