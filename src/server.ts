@@ -1,12 +1,18 @@
 import { buildApp } from "./app.js";
+import type { Broker } from "./broker/broker.js";
 import { MemoryBroker } from "./broker/memory-broker.js";
+import { RedisBroker } from "./broker/redis-broker.js";
 import { loadConfig } from "./config.js";
 import { createDatabase } from "./db/client.js";
 
 const config = loadConfig();
 const database = createDatabase(config.DATABASE_URL);
-const broker = new MemoryBroker();
+const broker: Broker = config.REDIS_URL
+  ? RedisBroker.connect(config.REDIS_URL)
+  : new MemoryBroker();
 const app = buildApp({ config, db: database.db, broker });
+
+app.log.info({ broker: config.REDIS_URL ? "redis" : "memory" }, "broker ready");
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, "shutting down");
