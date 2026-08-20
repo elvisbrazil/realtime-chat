@@ -1,6 +1,9 @@
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import {
+  jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
@@ -40,6 +43,18 @@ export function buildApp({ config, db, broker }: AppDeps) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  app.register(swagger, {
+    openapi: {
+      info: { title: "realtime-chat", version: "0.1.0" },
+      components: {
+        securitySchemes: { bearer: { type: "http", scheme: "bearer", bearerFormat: "JWT" } },
+      },
+      security: [{ bearer: [] }],
+    },
+    transform: jsonSchemaTransform,
+  });
+  app.register(swaggerUi, { routePrefix: "/docs" });
+
   app.register(websocket, {
     options: { handleProtocols: selectProtocol, maxPayload: config.MAX_MESSAGE_BYTES * 4 },
   });
@@ -47,6 +62,7 @@ export function buildApp({ config, db, broker }: AppDeps) {
 
   app.get("/health", async () => ({ status: "ok" }));
   app.register(authRoutes);
+
   const rooms = createRoomRepository(db);
   const messages = createMessageRepository(db);
 
