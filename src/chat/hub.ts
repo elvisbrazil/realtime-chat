@@ -43,12 +43,7 @@ export class ChatHub {
     const isNew = this.presence.touch(room, member.user);
     member.send(this.snapshot(room));
     if (isNew) this.broadcast(room, this.snapshot(room), member.id);
-    await this.broker.publish(room, {
-      type: "presence",
-      room,
-      user: member.user,
-      status: "online",
-    });
+    await this.announce(room, member.user);
   }
 
   async leave(member: Member, room: string): Promise<void> {
@@ -84,12 +79,10 @@ export class ChatHub {
 
   async heartbeat(): Promise<void> {
     const announcements: Promise<void>[] = [];
-    for (const [room, local] of this.members) {
-      for (const user of new Set([...local].map((m) => m.user))) {
+    for (const room of this.members.keys()) {
+      for (const user of this.localUsers(room)) {
         this.presence.touch(room, user);
-        announcements.push(
-          this.broker.publish(room, { type: "presence", room, user, status: "online" }),
-        );
+        announcements.push(this.announce(room, user));
       }
     }
 
@@ -119,24 +112,37 @@ export class ChatHub {
 
   private onPresence(room: string, user: string, status: "online" | "offline"): void {
     if (status === "online") {
-      if (this.presence.touch(room, user)) this.broadcast(room, this.snapshot(room));
+      if (!this.presence.touch(room, user)) return;
+      this.broadcast(room, this.snapshot(room));
+      for (const local of this.localUsers(room)) {
+        if (local !== user) this.reannounce(room, local);
+      }
       return;
     }
 
     if (this.hasLocalUser(room, user)) {
-      this.broker
-        .publish(room, { type: "presence", room, user, status: "online" })
-        .catch((err: unknown) => this.log.warn({ err, room }, "failed to re-announce presence"));
+      this.reannounce(room, user);
       return;
     }
     if (this.presence.remove(room, user)) this.broadcast(room, this.snapshot(room));
   }
 
+  private announce(room: string, user: string): Promise<void> {
+    return this.broker.publish(room, { type: "presence", room, user, status: "online" });
+  }
+
+  private reannounce(room: string, user: string): void {
+    this.announce(room, user).catch((err: unknown) =>
+      this.log.warn({ err, room }, "failed to announce presence"),
+    );
+  }
+
+  private localUsers(room: string): Set<string> {
+    return new Set([...(this.members.get(room) ?? [])].map((member) => member.user));
+  }
+
   private hasLocalUser(room: string, user: string): boolean {
-    for (const member of this.members.get(room) ?? []) {
-      if (member.user === user) return true;
-    }
-    return false;
+    return this.localUsers(room).has(user);
   }
 
   private snapshot(room: string): ServerEvent {

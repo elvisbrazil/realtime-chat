@@ -49,10 +49,12 @@ describe("two instances sharing a broker", () => {
   it("shows users from both instances in presence", async () => {
     const room = await createRoom(first, await tokenFor(first, "ana"), "cluster-presence");
     const ana = await join(first, "ana", room);
-    await join(second, "bea", room);
+    const bea = await join(second, "bea", room);
 
-    const presence = await ana.next("presence", (p) => p.users.includes("bea"));
-    expect(presence.users).toEqual(["ana", "bea"]);
+    const seenByAna = await ana.next("presence", (p) => p.users.includes("bea"));
+    const seenByBea = await bea.next("presence", (p) => p.users.includes("ana"), 500);
+    expect(seenByAna.users).toEqual(["ana", "bea"]);
+    expect(seenByBea.users).toEqual(["ana", "bea"]);
   });
 
   it("updates presence on the other instance when a socket disconnects", async () => {
