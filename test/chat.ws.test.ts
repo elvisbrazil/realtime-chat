@@ -159,4 +159,28 @@ describe("chat websocket", () => {
 
     expect(await bea.next("typing")).toEqual({ type: "typing", room, user: "ana", isTyping: true });
   });
+
+  it("rejects binary frames", async () => {
+    const ana = await open(anaToken);
+
+    ana.ws.send(Buffer.from([1, 2, 3]));
+
+    expect(await ana.next("error")).toMatchObject({ code: "bad_request" });
+  });
+
+  it("ignores typing and leave for rooms the socket is not in", async () => {
+    const room = await createRoom(app, anaToken, "outsider");
+    const ana = await open(anaToken);
+    const bea = await open(beaToken);
+    bea.send({ type: "join", room });
+    await bea.next("presence");
+
+    ana.send({ type: "typing", room, isTyping: true });
+    ana.send({ type: "leave", room });
+    ana.send({ type: "join", room: "00000000-0000-4000-8000-000000000000" });
+    await ana.next("error");
+
+    expect(bea.received("typing")).toEqual([]);
+    expect(ana.received("error")).toEqual([]);
+  });
 });
