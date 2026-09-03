@@ -24,6 +24,20 @@ API docs are served at http://localhost:3000/docs.
 pnpm test
 ```
 
+## Configuration
+
+| variable                | default  | notes                                         |
+| ----------------------- | -------- | --------------------------------------------- |
+| `DATABASE_URL`          | required | Postgres connection string                    |
+| `JWT_SECRET`            | required | at least 16 characters                        |
+| `REDIS_URL`             | unset    | unset means in-memory broker, single instance |
+| `PORT`                  | `3000`   |                                               |
+| `JWT_EXPIRES_IN`        | `12h`    |                                               |
+| `MAX_MESSAGE_BYTES`     | `4096`   | per WebSocket frame                           |
+| `RATE_LIMIT_BURST`      | `10`     | messages a connection can send at once        |
+| `RATE_LIMIT_PER_SECOND` | `2`      | refill rate                                   |
+| `HEARTBEAT_INTERVAL_MS` | `15000`  | ping and presence refresh interval            |
+
 ## Two instances
 
 Start a second process on another port, pointing at the same Postgres and Redis:
